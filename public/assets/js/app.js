@@ -8,15 +8,18 @@ import {
   dropDistance,
   mergePiece,
   movePiece,
+  resolveHold,
   scoreForLines,
   tryRotate,
-} from './game-core.js';
-import { createSevenBag } from './random.js';
+} from './game-core.js?v=20260720-2';
+import { createSevenBag } from './random.js?v=20260720-2';
 
 const boardCanvas = document.querySelector('[data-board]');
 const nextCanvas = document.querySelector('[data-next]');
+const holdCanvas = document.querySelector('[data-hold]');
 const boardContext = boardCanvas.getContext('2d');
 const nextContext = nextCanvas.getContext('2d');
+const holdContext = holdCanvas.getContext('2d');
 const scoreElement = document.querySelector('[data-score]');
 const linesElement = document.querySelector('[data-lines]');
 const levelElement = document.querySelector('[data-level]');
@@ -26,12 +29,20 @@ const overlay = document.querySelector('[data-overlay]');
 const overlayTitle = document.querySelector('[data-overlay-title]');
 const overlayText = document.querySelector('[data-overlay-text]');
 const liveStatus = document.querySelector('[data-live-status]');
+const holdButtons = document.querySelectorAll('[data-action="hold"]');
 
 const STORAGE_KEY = 'cora:tetris:high-score:v1';
 const CELL_SIZE = 30;
+const LOCK_DELAY = 450;
+const MAX_LOCK_RESETS = 15;
+const HORIZONTAL_DELAY = 135;
+const HORIZONTAL_REPEAT = 42;
+const SOFT_DROP_REPEAT = 42;
 let board = createBoard();
 let activePiece = null;
 let nextType = null;
+let heldType = null;
+let canHold = true;
 let bag = [];
 let score = 0;
 let lines = 0;
@@ -41,6 +52,17 @@ let state = 'idle';
 let dropCounter = 0;
 let lastTime = 0;
 let animationFrame = 0;
+let lockCounter = 0;
+let lockResets = 0;
+const input = {
+  left: false,
+  right: false,
+  down: false,
+  horizontal: 0,
+  horizontalHeld: 0,
+  horizontalRepeat: 0,
+  downRepeat: 0,
+};
 
 function readHighScore() {
   try {
@@ -78,6 +100,7 @@ function updateStats() {
   levelElement.textContent = String(level);
   highScoreElement.textContent = Math.max(highScore, score).toLocaleString('ko-KR');
   boardCanvas.setAttribute('aria-label', `테트리스 게임판. 점수 ${score}점, 지운 줄 ${lines}개, 레벨 ${level}`);
+  holdButtons.forEach((button) => { button.disabled = state !== 'running' || !canHold; });
 }
 
 function showOverlay(title, text) {
@@ -136,27 +159,55 @@ function drawBoard() {
   }
 }
 
-function drawNext() {
-  nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-  if (!nextType) return;
-  const piece = createPiece(nextType);
+function drawPreview(context, canvas, type) {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  if (!type) return;
+  const piece = createPiece(type);
   const size = 24;
   const width = piece.matrix[0].length * size;
   const height = piece.matrix.length * size;
-  piece.x = (nextCanvas.width - width) / (size * 2);
-  piece.y = (nextCanvas.height - height) / (size * 2);
-  drawPiece(nextContext, piece, 0, 1, size);
+  piece.x = (canvas.width - width) / (size * 2);
+  piece.y = (canvas.height - height) / (size * 2);
+  drawPiece(context, piece, 0, 1, size);
 }
 
 function draw() {
   drawBoard();
-  drawNext();
+  drawPreview(nextContext, nextCanvas, nextType);
+  drawPreview(holdContext, holdCanvas, heldType);
   updateStats();
+}
+
+function resetLockState() {
+  lockCounter = 0;
+  lockResets = 0;
+}
+
+function resetInputState() {
+  input.left = false;
+  input.right = false;
+  input.down = false;
+  input.horizontal = 0;
+  input.horizontalHeld = 0;
+  input.horizontalRepeat = 0;
+  input.downRepeat = 0;
+}
+
+function isGrounded(piece = activePiece) {
+  return Boolean(piece) && collides(board, movePiece(piece, 0, 1));
+}
+
+function resetGroundedLock(wasGrounded) {
+  if (wasGrounded && lockResets < MAX_LOCK_RESETS) {
+    lockCounter = 0;
+    lockResets += 1;
+  }
 }
 
 function spawnNextPiece() {
   activePiece = createPiece(nextType);
   nextType = takeType();
+  resetLockState();
   if (collides(board, activePiece)) finishGame();
 }
 
@@ -170,32 +221,56 @@ function lockPiece() {
     level = Math.floor(lines / 10) + 1;
     setStatus(`${result.cleared}줄을 지웠습니다. 현재 점수 ${score}점입니다.`);
   }
+  canHold = true;
   spawnNextPiece();
 }
 
 function stepDown(manual = false) {
-  if (state !== 'running') return;
+  if (state !== 'running') return false;
   const candidate = movePiece(activePiece, 0, 1);
-  if (collides(board, candidate)) {
-    lockPiece();
-  } else {
-    activePiece = candidate;
-    if (manual) score += 1;
-  }
+  if (collides(board, candidate)) return false;
+  activePiece = candidate;
+  if (manual) score += 1;
   dropCounter = 0;
+  resetLockState();
   draw();
+  return true;
 }
 
 function moveHorizontal(direction) {
   if (state !== 'running') return;
+  const wasGrounded = isGrounded();
   const candidate = movePiece(activePiece, direction, 0);
-  if (!collides(board, candidate)) activePiece = candidate;
+  if (!collides(board, candidate)) {
+    activePiece = candidate;
+    resetGroundedLock(wasGrounded);
+  }
   draw();
 }
 
 function rotate(clockwise) {
   if (state !== 'running') return;
+  const previousPiece = activePiece;
+  const wasGrounded = isGrounded();
   activePiece = tryRotate(board, activePiece, clockwise);
+  if (activePiece !== previousPiece) resetGroundedLock(wasGrounded);
+  draw();
+}
+
+function holdPiece() {
+  if (state !== 'running' || !canHold) return;
+  const held = resolveHold(activePiece.type, heldType, nextType);
+  heldType = held.heldType;
+  activePiece = createPiece(held.activeType);
+  if (held.consumeNext) nextType = takeType();
+  canHold = false;
+  dropCounter = 0;
+  resetLockState();
+  if (collides(board, activePiece)) {
+    finishGame();
+    return;
+  }
+  setStatus(`${heldType} 블록을 보관했습니다.`);
   draw();
 }
 
@@ -211,6 +286,7 @@ function hardDrop() {
 
 function finishGame() {
   state = 'over';
+  resetInputState();
   cancelAnimationFrame(animationFrame);
   pauseButton.disabled = true;
   pauseButton.textContent = '일시정지';
@@ -227,8 +303,16 @@ function update(time = 0) {
   if (state !== 'running') return;
   const delta = Math.min(100, time - lastTime);
   lastTime = time;
+  processHeldInput(delta);
   dropCounter += delta;
   if (dropCounter >= dropInterval()) stepDown(false);
+  if (state === 'running' && isGrounded()) {
+    lockCounter += delta;
+    if (lockCounter >= LOCK_DELAY) lockPiece();
+  } else {
+    lockCounter = 0;
+  }
+  draw();
   if (state === 'running') animationFrame = requestAnimationFrame(update);
 }
 
@@ -240,6 +324,10 @@ function startGame() {
   lines = 0;
   level = 1;
   dropCounter = 0;
+  heldType = null;
+  canHold = true;
+  resetInputState();
+  resetLockState();
   activePiece = createPiece(takeType());
   nextType = takeType();
   state = 'running';
@@ -256,6 +344,7 @@ function startGame() {
 function togglePause() {
   if (state === 'running') {
     state = 'paused';
+    resetInputState();
     cancelAnimationFrame(animationFrame);
     pauseButton.textContent = '계속하기';
     showOverlay('일시정지', '계속하기 버튼이나 P 키를 누르세요.');
@@ -279,17 +368,82 @@ function performAction(action) {
     rotate: () => rotate(true),
     'rotate-back': () => rotate(false),
     drop: hardDrop,
+    hold: holdPiece,
   };
   actions[action]?.();
+}
+
+function setContinuousInput(action, pressed) {
+  input[action] = pressed;
+  if (action === 'down') {
+    input.downRepeat = 0;
+    if (pressed) stepDown(true);
+    return;
+  }
+
+  const direction = action === 'left' ? -1 : 1;
+  if (pressed) {
+    input.horizontal = direction;
+    input.horizontalHeld = 0;
+    input.horizontalRepeat = 0;
+    moveHorizontal(direction);
+  } else if (input.horizontal === direction) {
+    const fallback = input.left ? -1 : input.right ? 1 : 0;
+    input.horizontal = fallback;
+    input.horizontalHeld = 0;
+    input.horizontalRepeat = 0;
+    if (fallback) moveHorizontal(fallback);
+  }
+}
+
+function processHeldInput(delta) {
+  if (input.horizontal) {
+    const previousHeld = input.horizontalHeld;
+    input.horizontalHeld += delta;
+    if (input.horizontalHeld >= HORIZONTAL_DELAY) {
+      input.horizontalRepeat += previousHeld < HORIZONTAL_DELAY
+        ? input.horizontalHeld - HORIZONTAL_DELAY
+        : delta;
+      while (input.horizontalRepeat >= HORIZONTAL_REPEAT) {
+        moveHorizontal(input.horizontal);
+        input.horizontalRepeat -= HORIZONTAL_REPEAT;
+      }
+    }
+  }
+  if (input.down) {
+    input.downRepeat += delta;
+    while (input.downRepeat >= SOFT_DROP_REPEAT) {
+      stepDown(true);
+      input.downRepeat -= SOFT_DROP_REPEAT;
+    }
+  }
 }
 
 document.querySelector('[data-start]').addEventListener('click', startGame);
 pauseButton.addEventListener('click', togglePause);
 document.querySelectorAll('[data-action]').forEach((button) => {
+  const action = button.dataset.action;
+  const continuous = action === 'left' || action === 'right' || action === 'down';
+
   button.addEventListener('pointerdown', (event) => {
     event.preventDefault();
-    performAction(button.dataset.action);
+    if (continuous) {
+      button.setPointerCapture?.(event.pointerId);
+      setContinuousInput(action, true);
+    } else {
+      performAction(action);
+    }
   });
+
+  if (continuous) {
+    const stopContinuousInput = (event) => {
+      event.preventDefault();
+      setContinuousInput(action, false);
+    };
+    button.addEventListener('pointerup', stopContinuousInput);
+    button.addEventListener('pointercancel', stopContinuousInput);
+    button.addEventListener('lostpointercapture', stopContinuousInput);
+  }
 });
 
 document.addEventListener('keydown', (event) => {
@@ -309,16 +463,34 @@ document.addEventListener('keydown', (event) => {
     }
     return;
   }
+  if (event.key === 'c' || event.key === 'C' || event.key === 'Shift') {
+    if (state === 'running') {
+      event.preventDefault();
+      if (!event.repeat) holdPiece();
+    }
+    return;
+  }
   const action = keyActions[event.key];
   if (action && state === 'running') {
     event.preventDefault();
-    performAction(action);
+    if (action === 'left' || action === 'right' || action === 'down') {
+      if (!event.repeat) setContinuousInput(action, true);
+    } else if (!event.repeat) {
+      performAction(action);
+    }
   }
+});
+
+document.addEventListener('keyup', (event) => {
+  const keyActions = { ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down' };
+  const action = keyActions[event.key];
+  if (action) setContinuousInput(action, false);
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && state === 'running') togglePause();
 });
+window.addEventListener('blur', resetInputState);
 
 document.querySelectorAll('[data-year]').forEach((element) => {
   element.textContent = String(new Date().getFullYear());

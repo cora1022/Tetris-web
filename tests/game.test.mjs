@@ -11,6 +11,7 @@ import {
   dropDistance,
   mergePiece,
   rotateMatrix,
+  resolveHold,
   scoreForLines,
   tryRotate,
 } from '../public/assets/js/game-core.js';
@@ -47,6 +48,20 @@ test('회전은 행과 열을 바꾸고 벽에 닿으면 위치를 보정한다'
   const piece = { ...createPiece('I'), matrix: [[1], [1], [1], [1]], x: 9 };
   const rotated = tryRotate(board, piece, true);
   assert.equal(collides(board, rotated), false);
+});
+
+test('바닥에 가까운 블록도 위쪽 보정으로 회전한다', () => {
+  const board = createBoard();
+  const piece = { ...createPiece('T'), y: 18 };
+  const rotated = tryRotate(board, piece, true);
+  assert.equal(collides(board, rotated), false);
+  assert.equal(rotated.rotation, 1);
+  assert.ok(rotated.y < piece.y);
+});
+
+test('보관함이 비었으면 다음 블록을 쓰고, 차 있으면 서로 교환한다', () => {
+  assert.deepEqual(resolveHold('T', null, 'I'), { activeType: 'I', heldType: 'T', consumeNext: true });
+  assert.deepEqual(resolveHold('L', 'S', 'Z'), { activeType: 'S', heldType: 'L', consumeNext: false });
 });
 
 test('완성된 줄을 지우고 위에 빈 줄을 채운다', () => {
