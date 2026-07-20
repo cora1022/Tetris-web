@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>테트리스 | 무료 블록 퍼즐 게임 - Cora</title>
+  <meta name="description" content="쌓이는 블록을 움직이고 회전해 가로줄을 완성하세요. 키보드와 모바일 버튼으로 가볍게 즐기는 무료 테트리스 게임입니다.">
+  <meta name="google-adsense-account" content="ca-pub-6044197403684738">
+  <link rel="canonical" href="https://tetris.cora1022.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="테트리스 | Cora">
+  <meta property="og:description" content="블록을 쌓고 줄을 완성하며 최고 점수에 도전하세요.">
+  <meta property="og:url" content="https://tetris.cora1022.com/">
+  <meta property="og:image" content="https://tetris.cora1022.com/og-tetris.png">
+  <link rel="icon" href="/cora-icon.png" type="image/png">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=20260720">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Cora 테트리스","url":"https://tetris.cora1022.com/","applicationCategory":"GameApplication","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"ko","description":"블록을 움직이고 회전해 가로줄을 완성하는 무료 퍼즐 게임"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"키보드로 어떻게 조작하나요?","acceptedAnswer":{"@type":"Answer","text":"방향키로 이동하고 위쪽 방향키로 회전합니다. 스페이스바는 빠른 낙하, P 또는 Esc 키는 일시정지입니다."}},{"@type":"Question","name":"휴대폰에서도 플레이할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"게임판 아래의 이동, 회전, 내리기 버튼으로 플레이할 수 있습니다."}},{"@type":"Question","name":"최고 점수는 어디에 저장되나요?","acceptedAnswer":{"@type":"Answer","text":"최고 점수는 현재 기기의 저장 공간에 보관됩니다. 저장 공간을 지우거나 다른 기기를 사용하면 점수가 이어지지 않습니다."}}]}]}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+  <header class="site-header">
+    <div class="header-inner container">
+      <a class="brand" href="https://cora1022.com/" aria-label="Cora 서비스 홈">
+        <img class="brand-mark" src="/cora-icon.png" alt="" width="34" height="34">
+        <strong>Cora</strong>
+      </a>
+      <nav aria-label="주요 메뉴">
+        <a href="#game">게임</a>
+        <a href="#how-to">게임 방법</a>
+        <a href="#faq">자주 묻는 질문</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="intro container" aria-labelledby="page-title">
+      <p class="eyebrow">Block puzzle</p>
+      <h1 id="page-title">테트리스</h1>
+      <p>블록을 움직이고 회전해 빈틈없이 쌓아 보세요. 가로 한 줄을 완성하면 줄이 사라지고 점수를 얻습니다.</p>
+    </section>
+
+    <div class="ad-slot container" data-ad-position="top" hidden aria-label="광고"></div>
+
+    <section class="game-section container" id="game" aria-labelledby="game-title">
+      <div class="section-title">
+        <div><p class="eyebrow">Play</p><h2 id="game-title">게임 시작</h2></div>
+        <div class="game-actions">
+          <button class="button button-primary" type="button" data-start>새 게임</button>
+          <button class="button button-secondary" type="button" data-pause disabled>일시정지</button>
+        </div>
+      </div>
+
+      <div class="game-shell">
+        <aside class="stats-panel" aria-label="게임 기록">
+          <div class="stat-card"><span>점수</span><strong data-score>0</strong></div>
+          <div class="stat-card"><span>지운 줄</span><strong data-lines>0</strong></div>
+          <div class="stat-card"><span>레벨</span><strong data-level>1</strong></div>
+          <div class="stat-card"><span>최고 점수</span><strong data-high-score>0</strong></div>
+        </aside>
+
+        <div class="game-column">
+          <div class="board-wrap">
+            <canvas class="game-board" width="300" height="600" tabindex="0" role="img" data-board aria-label="테트리스 게임판"></canvas>
+            <div class="board-overlay" data-overlay>
+              <strong data-overlay-title>게임 준비</strong>
+              <span data-overlay-text>새 게임 버튼을 눌러 시작하세요.</span>
+            </div>
+          </div>
+          <div class="touch-controls" aria-label="모바일 게임 조작">
+            <button type="button" data-action="left" aria-label="왼쪽으로 이동"><span aria-hidden="true">←</span><small>왼쪽</small></button>
+            <button type="button" data-action="rotate" aria-label="오른쪽으로 회전"><span aria-hidden="true">↻</span><small>회전</small></button>
+            <button type="button" data-action="right" aria-label="오른쪽으로 이동"><span aria-hidden="true">→</span><small>오른쪽</small></button>
+            <button type="button" data-action="down" aria-label="한 칸 내리기"><span aria-hidden="true">↓</span><small>내리기</small></button>
+            <button type="button" data-action="drop" aria-label="끝까지 내리기"><span aria-hidden="true">⇊</span><small>바로 놓기</small></button>
+          </div>
+        </div>
+
+        <aside class="next-panel" aria-label="다음 블록과 키 안내">
+          <div class="next-card">
+            <strong>다음 블록</strong>
+            <canvas width="120" height="96" data-next aria-label="다음에 나올 블록"></canvas>
+          </div>
+          <div class="key-guide">
+            <strong>키보드</strong>
+            <dl>
+              <div><dt>이동</dt><dd>← ↓ →</dd></div>
+              <div><dt>회전</dt><dd>↑ / Z</dd></div>
+              <div><dt>바로 놓기</dt><dd>Space</dd></div>
+              <div><dt>일시정지</dt><dd>P / Esc</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+      <p class="sr-only" aria-live="polite" data-live-status>새 게임 버튼을 눌러 시작하세요.</p>
+    </section>
+
+    <div class="ad-slot container" data-ad-position="middle" hidden aria-label="광고"></div>
+
+    <section class="info-section container" id="how-to" aria-labelledby="how-title">
+      <p class="eyebrow">How to play</p>
+      <h2 id="how-title">게임 방법</h2>
+      <ol class="step-grid">
+        <li><strong>블록 움직이기</strong><span>좌우로 이동하고 회전해 놓을 위치를 정합니다.</span></li>
+        <li><strong>줄 완성하기</strong><span>가로줄을 빈칸 없이 채우면 해당 줄이 사라집니다.</span></li>
+        <li><strong>점수 높이기</strong><span>여러 줄을 한 번에 지우고 높은 레벨에 도전합니다.</span></li>
+      </ol>
+      <div class="tip-card"><strong>점수 안내</strong><p>한 번에 많은 줄을 지울수록 더 높은 점수를 받습니다. 아래 방향키로 직접 내리거나 스페이스바로 바로 놓아도 추가 점수를 얻습니다.</p></div>
+    </section>
+
+    <section class="faq-section container" id="faq" aria-labelledby="faq-title">
+      <p class="eyebrow">FAQ</p>
+      <h2 id="faq-title">자주 묻는 질문</h2>
+      <div class="faq-list">
+        <details><summary>키보드로 어떻게 조작하나요?</summary><p>방향키로 이동하고 위쪽 방향키로 회전합니다. Z 키는 반대 방향 회전, 스페이스바는 바로 놓기, P 또는 Esc 키는 일시정지입니다.</p></details>
+        <details><summary>휴대폰에서도 플레이할 수 있나요?</summary><p>게임판 아래의 왼쪽, 회전, 오른쪽, 내리기, 바로 놓기 버튼으로 플레이할 수 있습니다.</p></details>
+        <details><summary>최고 점수는 어디에 저장되나요?</summary><p>최고 점수는 현재 기기의 저장 공간에 보관됩니다. 저장 공간을 지우거나 다른 기기를 사용하면 점수가 이어지지 않습니다.</p></details>
+      </div>
+    </section>
+
+    <div class="ad-slot container" data-ad-position="bottom" hidden aria-label="광고"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div><strong>Cora</strong><p>일상을 위한 간단한 서비스와 게임을 제공합니다.</p></div>
+      <nav aria-label="사이트 정책"><a href="/privacy.html">개인정보처리방침</a><a href="/terms.html">이용약관</a><a href="/contact.html">문의</a><a href="https://cora1022.com/">전체 서비스</a></nav>
+      <small>© <span data-year></span> cora1022. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <aside class="consent" data-consent hidden aria-label="방문 통계 설정">
+    <p>서비스 개선을 위해 익명 방문 통계를 사용합니다. <a href="/privacy.html">자세히 보기</a></p>
+    <div><button type="button" data-consent-reject>거부</button><button type="button" data-consent-accept>동의</button></div>
+  </aside>
+
+  <script type="module" src="/assets/js/app.js?v=20260720"></script>
+  <script type="module" src="/assets/js/analytics.js?v=20260720"></script>
+  <script type="module" src="/assets/js/ads.js?v=20260720"></script>
+</body>
+</html>
