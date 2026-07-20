@@ -14,9 +14,9 @@
   <meta property="og:url" content="https://tetris.cora1022.com/">
   <meta property="og:image" content="https://tetris.cora1022.com/og-tetris.png">
   <link rel="icon" href="/cora-icon.png" type="image/png">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=20260720">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=20260720-2">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Cora 테트리스","url":"https://tetris.cora1022.com/","applicationCategory":"GameApplication","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"ko","description":"블록을 움직이고 회전해 가로줄을 완성하는 무료 퍼즐 게임"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"키보드로 어떻게 조작하나요?","acceptedAnswer":{"@type":"Answer","text":"방향키로 이동하고 위쪽 방향키로 회전합니다. 스페이스바는 빠른 낙하, P 또는 Esc 키는 일시정지입니다."}},{"@type":"Question","name":"휴대폰에서도 플레이할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"게임판 아래의 이동, 회전, 내리기 버튼으로 플레이할 수 있습니다."}},{"@type":"Question","name":"최고 점수는 어디에 저장되나요?","acceptedAnswer":{"@type":"Answer","text":"최고 점수는 현재 기기의 저장 공간에 보관됩니다. 저장 공간을 지우거나 다른 기기를 사용하면 점수가 이어지지 않습니다."}}]}]}
+  {"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Cora 테트리스","url":"https://tetris.cora1022.com/","applicationCategory":"GameApplication","operatingSystem":"Any","isAccessibleForFree":true,"inLanguage":"ko","description":"블록을 움직이고 회전해 가로줄을 완성하는 무료 퍼즐 게임"},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"키보드로 어떻게 조작하나요?","acceptedAnswer":{"@type":"Answer","text":"방향키로 이동하고 위쪽 방향키로 회전합니다. 스페이스바는 빠른 낙하, C 또는 Shift 키는 블록 보관, P 또는 Esc 키는 일시정지입니다."}},{"@type":"Question","name":"휴대폰에서도 플레이할 수 있나요?","acceptedAnswer":{"@type":"Answer","text":"게임판 아래의 이동, 회전, 내리기, 보관 버튼으로 플레이할 수 있습니다."}},{"@type":"Question","name":"최고 점수는 어디에 저장되나요?","acceptedAnswer":{"@type":"Answer","text":"최고 점수는 현재 기기의 저장 공간에 보관됩니다. 저장 공간을 지우거나 다른 기기를 사용하면 점수가 이어지지 않습니다."}}]}]}
   </script>
 </head>
 <body>
@@ -75,6 +75,7 @@
             <button type="button" data-action="right" aria-label="오른쪽으로 이동"><span aria-hidden="true">→</span><small>오른쪽</small></button>
             <button type="button" data-action="down" aria-label="한 칸 내리기"><span aria-hidden="true">↓</span><small>내리기</small></button>
             <button type="button" data-action="drop" aria-label="끝까지 내리기"><span aria-hidden="true">⇊</span><small>바로 놓기</small></button>
+            <button type="button" data-action="hold" aria-label="현재 블록 보관"><span aria-hidden="true">↔</span><small>보관</small></button>
           </div>
         </div>
 
@@ -83,12 +84,17 @@
             <strong>다음 블록</strong>
             <canvas width="120" height="96" data-next aria-label="다음에 나올 블록"></canvas>
           </div>
+          <div class="next-card">
+            <strong>보관 블록</strong>
+            <canvas width="120" height="96" data-hold aria-label="보관한 블록"></canvas>
+          </div>
           <div class="key-guide">
             <strong>키보드</strong>
             <dl>
               <div><dt>이동</dt><dd>← ↓ →</dd></div>
               <div><dt>회전</dt><dd>↑ / Z</dd></div>
               <div><dt>바로 놓기</dt><dd>Space</dd></div>
+              <div><dt>블록 보관</dt><dd>C / Shift</dd></div>
               <div><dt>일시정지</dt><dd>P / Esc</dd></div>
             </dl>
           </div>
@@ -114,8 +120,8 @@
       <p class="eyebrow">FAQ</p>
       <h2 id="faq-title">자주 묻는 질문</h2>
       <div class="faq-list">
-        <details><summary>키보드로 어떻게 조작하나요?</summary><p>방향키로 이동하고 위쪽 방향키로 회전합니다. Z 키는 반대 방향 회전, 스페이스바는 바로 놓기, P 또는 Esc 키는 일시정지입니다.</p></details>
-        <details><summary>휴대폰에서도 플레이할 수 있나요?</summary><p>게임판 아래의 왼쪽, 회전, 오른쪽, 내리기, 바로 놓기 버튼으로 플레이할 수 있습니다.</p></details>
+        <details><summary>키보드로 어떻게 조작하나요?</summary><p>방향키로 이동하고 위쪽 방향키로 회전합니다. Z 키는 반대 방향 회전, 스페이스바는 바로 놓기, C 또는 Shift 키는 블록 보관, P 또는 Esc 키는 일시정지입니다.</p></details>
+        <details><summary>휴대폰에서도 플레이할 수 있나요?</summary><p>게임판 아래의 왼쪽, 회전, 오른쪽, 내리기, 바로 놓기, 보관 버튼으로 플레이할 수 있습니다.</p></details>
         <details><summary>최고 점수는 어디에 저장되나요?</summary><p>최고 점수는 현재 기기의 저장 공간에 보관됩니다. 저장 공간을 지우거나 다른 기기를 사용하면 점수가 이어지지 않습니다.</p></details>
       </div>
     </section>
@@ -136,7 +142,7 @@
     <div><button type="button" data-consent-reject>거부</button><button type="button" data-consent-accept>동의</button></div>
   </aside>
 
-  <script type="module" src="/assets/js/app.js?v=20260720"></script>
+  <script type="module" src="/assets/js/app.js?v=20260720-2"></script>
   <script type="module" src="/assets/js/analytics.js?v=20260720"></script>
   <script type="module" src="/assets/js/ads.js?v=20260720"></script>
 </body>

@@ -24,6 +24,7 @@ export function createPiece(type) {
     matrix: definition.matrix.map((row) => [...row]),
     x: Math.floor((BOARD_COLUMNS - definition.matrix[0].length) / 2),
     y: 0,
+    rotation: 0,
   };
 }
 
@@ -54,14 +55,26 @@ export function movePiece(piece, xDelta, yDelta) {
 
 export function tryRotate(board, piece, clockwise = true) {
   if (piece.type === 'O') return piece;
-  const rotated = { ...piece, matrix: rotateMatrix(piece.matrix, clockwise) };
-  const kicks = [0, -1, 1, -2, 2];
-  for (const offset of kicks) {
-    const candidate = { ...rotated, x: rotated.x + offset };
+  const direction = clockwise ? 1 : -1;
+  const rotated = {
+    ...piece,
+    matrix: rotateMatrix(piece.matrix, clockwise),
+    rotation: ((piece.rotation || 0) + direction + 4) % 4,
+  };
+  const kicks = piece.type === 'I'
+    ? [[0, 0], [-2, 0], [2, 0], [-1, 0], [1, 0], [0, -1], [-2, -1], [2, -1], [0, -2]]
+    : [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1], [-1, -1], [1, -1], [0, -2]];
+  for (const [xOffset, yOffset] of kicks) {
+    const candidate = { ...rotated, x: rotated.x + xOffset, y: rotated.y + yOffset };
     if (!collides(board, candidate)) return candidate;
   }
-  const raised = { ...rotated, y: rotated.y - 1 };
-  return collides(board, raised) ? piece : raised;
+  return piece;
+}
+
+export function resolveHold(activeType, heldType, nextType) {
+  if (!activeType || !nextType) throw new Error('보관할 블록 정보가 필요합니다.');
+  if (heldType) return { activeType: heldType, heldType: activeType, consumeNext: false };
+  return { activeType: nextType, heldType: activeType, consumeNext: true };
 }
 
 export function mergePiece(board, piece) {
